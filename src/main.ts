@@ -3,6 +3,7 @@ interface GutiData {
   records: { [date: string]: 'O' | 'X' | 'OFF' };
   offDays: number[];
   taskTitle?: string;
+  lockPastDates?: boolean;
 }
 
 const holidays2026: { [key: string]: string } = {
@@ -36,9 +37,10 @@ function loadData(): GutiData {
     const data = JSON.parse(saved);
     if (!data.offDays) data.offDays = [];
     if (!data.taskTitle) data.taskTitle = '最低30分ヨガする';
+    if (data.lockPastDates === undefined) data.lockPastDates = true; // デフォルトはON
     return data;
   }
-  return { startDate: null, records: {}, offDays: [], taskTitle: '最低30分ヨガする' };
+  return { startDate: null, records: {}, offDays: [], taskTitle: '最低30分ヨガする', lockPastDates: true };
 }
 
 function saveData(data: GutiData) {
@@ -48,9 +50,7 @@ function saveData(data: GutiData) {
 function updateTaskTitleUI() {
   const data = loadData();
   const titleEl = document.getElementById('task-title');
-  if (titleEl) {
-    titleEl.textContent = data.taskTitle || '最低30分ヨガする';
-  }
+  if (titleEl) titleEl.textContent = data.taskTitle || '最低30分ヨガする';
 }
 
 function getMedalSVG(duration: number): string {
@@ -63,24 +63,28 @@ function getMedalSVG(duration: number): string {
 }
 
 function updateStatsAndPastDays(data: GutiData, todayStr: string, jstToday: Date) {
-  let needSave = false;
+  // 開始日（startDate）を、OかXが記録されている最も古い日に自動更新する
+  const activeDates = Object.keys(data.records).filter(k => data.records[k] === 'O' || data.records[k] === 'X');
+  if (activeDates.length > 0) {
+    activeDates.sort();
+    data.startDate = activeDates[0];
+  } else {
+    data.startDate = null;
+  }
+
+  // 開始日から今日までの間を埋める処理
   if (data.startDate) {
     const start = new Date(data.startDate);
     const today = new Date(jstToday.getFullYear(), jstToday.getMonth(), jstToday.getDate());
     for (let d = new Date(start); d < today; d.setDate(d.getDate() + 1)) {
       const dStr = formatDate(d);
       if (!data.records[dStr]) {
-        if (data.offDays.includes(d.getDay())) {
-          data.records[dStr] = 'OFF';
-        } else {
-          data.records[dStr] = 'X';
-        }
-        needSave = true;
+        data.records[dStr] = data.offDays.includes(d.getDay()) ? 'OFF' : 'X';
       }
     }
   }
-  if (needSave) saveData(data);
 
+  // ストリークと継続期間の計算
   let streak = 0;
   let duration = 0;
   let checkDate = new Date(jstToday.getFullYear(), jstToday.getMonth(), jstToday.getDate());
@@ -91,7 +95,7 @@ function updateStatsAndPastDays(data: GutiData, todayStr: string, jstToday: Date
   if (todayStatus === 'O') {
     streak++; duration++; checkDate.setDate(checkDate.getDate() - 1);
   } else if (todayStatus === 'X') {
-    // nothing
+    // 途切れ
   } else if (isTodayOffDay || todayStatus === 'OFF') {
     duration++; checkDate.setDate(checkDate.getDate() - 1);
   } else {
@@ -115,10 +119,8 @@ function updateStatsAndPastDays(data: GutiData, todayStr: string, jstToday: Date
     }
   }
 
-  // 変更箇所：バッジの数字だけを更新
   const streakNumEl = document.getElementById('streak-number');
   const medalEl = document.getElementById('medal-display');
-  
   if (streakNumEl) streakNumEl.textContent = String(streak);
   if (medalEl) medalEl.innerHTML = getMedalSVG(duration);
 }
@@ -136,6 +138,7 @@ function renderCalendar() {
   const data = loadData();
 
   updateStatsAndPastDays(data, todayStr, jstToday);
+  saveData(data); // 動的計算の結果を保存
 
   const firstDay = new Date(currentViewYear, currentViewMonth, 1).getDay();
   const lastDate = new Date(currentViewYear, currentViewMonth + 1, 0).getDate();
@@ -173,31 +176,40 @@ function renderCalendar() {
 
     if (displayStatus) {
       statusSpan.textContent = displayStatus === 'O' ? '○' : displayStatus === 'X' ? '×' : 'OFF';
-      
       if (displayStatus === 'O') {
-        statusSpan.style.color = '#4ade80';
-        statusSpan.style.fontSize = '2.4rem';
+        statusSpan.style.color = '#4ade80'; statusSpan.style.fontSize = '2.4rem';
       }
       if (displayStatus === 'X') {
-        statusSpan.style.color = '#fca5a5';
-        statusSpan.style.fontSize = '1.1rem';
+        statusSpan.style.color = '#fca5a5'; statusSpan.style.fontSize = '1.1rem';
       }
       if (displayStatus === 'OFF') {
-        statusSpan.style.color = '#9ca3af';
-        statusSpan.style.fontSize = '1.2rem';
+        statusSpan.style.color = '#9ca3af'; statusSpan.style.fontSize = '1.2rem';
       }
     }
 
     if (dateStr === todayStr) {
       cell.style.border = '2px solid #555';
-      if (!data.offDays.includes(dayOfWeek) && !data.records[dateStr]) {
-        cell.addEventListener('click', () => {
-          if (!data.startDate) data.startDate = dateStr;
+    }
+
+    // 未来日は編集不可、過去日はロック設定に従う
+    const isFuture = dateStr > todayStr;
+    const canEdit = dateStr === todayStr || (!isFuture && !data.lockPastDates);
+
+    if (canEdit) {
+      cell.classList.add('clickable');
+      cell.addEventListener('click', () => {
+        const current = data.records[dateStr];
+        // タップで O → X → OFF → O と切り替わる（手動でOFFに上書き可能）
+        if (current === 'O') {
+          data.records[dateStr] = 'X';
+        } else if (current === 'X') {
+          data.records[dateStr] = 'OFF';
+        } else {
           data.records[dateStr] = 'O';
-          saveData(data);
-          renderCalendar();
-        });
-      }
+        }
+        saveData(data);
+        renderCalendar(); // クリックごとに再描画＆統計計算
+      });
     }
 
     cell.appendChild(dateNum);
@@ -209,25 +221,17 @@ function renderCalendar() {
 function setupNavigation() {
   const prevBtn = document.getElementById('prev-month-btn');
   const nextBtn = document.getElementById('next-month-btn');
-
   if (prevBtn) {
     prevBtn.addEventListener('click', () => {
       currentViewMonth--;
-      if (currentViewMonth < 0) {
-        currentViewMonth = 11;
-        currentViewYear--;
-      }
+      if (currentViewMonth < 0) { currentViewMonth = 11; currentViewYear--; }
       renderCalendar();
     });
   }
-
   if (nextBtn) {
     nextBtn.addEventListener('click', () => {
       currentViewMonth++;
-      if (currentViewMonth > 11) {
-        currentViewMonth = 0;
-        currentViewYear++;
-      }
+      if (currentViewMonth > 11) { currentViewMonth = 0; currentViewYear++; }
       renderCalendar();
     });
   }
@@ -238,19 +242,18 @@ function setupSettings() {
   const modal = document.getElementById('settings-modal');
   const closeBtn = document.getElementById('close-settings-btn');
   const container = document.getElementById('off-days-container');
-  
   const taskInput = document.getElementById('task-input') as HTMLInputElement;
   const saveTaskBtn = document.getElementById('save-task-btn');
+  const lockCheckbox = document.getElementById('lock-past-checkbox') as HTMLInputElement;
+  const resetBtn = document.getElementById('reset-data-btn');
 
   if (!btn || !modal || !closeBtn || !container) return;
-
   const weekNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   btn.addEventListener('click', () => {
     const data = loadData();
-    if (taskInput) {
-      taskInput.value = data.taskTitle || '最低30分ヨガする';
-    }
+    if (taskInput) taskInput.value = data.taskTitle || '最低30分ヨガする';
+    if (lockCheckbox) lockCheckbox.checked = data.lockPastDates !== false;
 
     container.innerHTML = '';
     weekNames.forEach((name, index) => {
@@ -268,6 +271,7 @@ function setupSettings() {
           currentData.offDays = currentData.offDays.filter(d => d !== index);
         }
         saveData(currentData);
+        renderCalendar();
       });
       container.appendChild(dayBtn);
     });
@@ -282,19 +286,37 @@ function setupSettings() {
         data.taskTitle = newTitle;
         saveData(data);
         updateTaskTitleUI();
-        
         const originalText = saveTaskBtn.textContent;
         saveTaskBtn.textContent = '保存完了！';
-        setTimeout(() => {
-          saveTaskBtn.textContent = originalText;
-        }, 1500);
+        setTimeout(() => { saveTaskBtn.textContent = originalText; }, 1500);
+      }
+    });
+  }
+
+  if (lockCheckbox) {
+    lockCheckbox.addEventListener('change', (e) => {
+      const data = loadData();
+      data.lockPastDates = (e.target as HTMLInputElement).checked;
+      saveData(data);
+      renderCalendar();
+    });
+  }
+
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      if (confirm('本当にすべての記録をリセットしますか？この操作は取り消せません。')) {
+        const data = loadData();
+        data.records = {};
+        data.startDate = null;
+        saveData(data);
+        renderCalendar();
+        modal.classList.add('hidden');
       }
     });
   }
 
   closeBtn.addEventListener('click', () => {
     modal.classList.add('hidden');
-    renderCalendar();
   });
 }
 
@@ -302,7 +324,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const jstToday = getJSTDate();
   currentViewYear = jstToday.getFullYear();
   currentViewMonth = jstToday.getMonth();
-  
   updateTaskTitleUI();
   setupNavigation();
   setupSettings();

@@ -4,14 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>GUTI</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/src/style.css">
-  <link rel="manifest" href="/manifest.json">
-  <link rel="icon" type="image/png" href="/favicon.png">
-  <link rel="apple-touch-icon" href="/icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="GUTI">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="apple-touch-icon" href="/icon.png">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/src/style.css">
 </head>
 <body>
   <div id="app">
@@ -19,16 +19,13 @@
       <div class="top-bar">
         <button id="settings-btn" class="icon-btn">⚙️</button>
       </div>
-      
       <h1 id="task-title">最低30分ヨガする</h1>
-      
       <div class="header-dashboard">
         <div class="month-nav">
           <button id="prev-month-btn" class="nav-btn">◀</button>
           <h2 id="current-month-display">2026年 5月</h2>
           <button id="next-month-btn" class="nav-btn">▶</button>
         </div>
-        
         <div class="streak-wrap">
           <div class="streak-badge">
             <span id="streak-number">0</span>
@@ -64,6 +61,16 @@
       <div class="setting-group">
         <p class="setting-label">OFF日の設定（毎週お休みにする曜日）</p>
         <div id="off-days-container" class="off-days-grid"></div>
+      </div>
+      <hr class="divider">
+      <div class="setting-group">
+        <label class="setting-label toggle-label">
+          過去の日付の入力をロックする
+          <input type="checkbox" id="lock-past-checkbox">
+        </label>
+      </div>
+      <div class="setting-group" style="margin-top: 25px;">
+        <button id="reset-data-btn" class="danger-btn">記録をすべてリセット</button>
       </div>
       <button id="close-settings-btn" class="close-btn">閉じる</button>
     </div>
