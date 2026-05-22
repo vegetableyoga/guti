@@ -69,7 +69,29 @@ body { background-color: var(--bg-color); color: var(--text-color); font-family:
 .off-day-btn.active { background: var(--accent-color); color: var(--active-color); border-color: var(--active-color); }
 .close-btn { background: var(--gray-color); color: var(--text-color); border: 1px solid var(--border-color); padding: 12px 30px; border-radius: 4px; cursor: pointer; font-weight: 700; font-size: 1rem; margin-top: 10px; width: 100%; }
 
-/* 追加分 */
+/* 追加設定とボタンのトグル */
 .toggle-label { display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 0.85rem; color: var(--text-color); margin-bottom: 0; }
 .toggle-label input[type="checkbox"] { transform: scale(1.2); accent-color: var(--active-color); cursor: pointer; }
 .danger-btn { background: #ef4444; color: white; border: none; padding: 12px; border-radius: 4px; font-weight: 700; cursor: pointer; width: 100%; font-size: 0.95rem; }
+
+/* フッター用スタイル */
+.app-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 0 0;
+  opacity: 0.6;
+}
+.footer-logo {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+}
+.footer-text {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #5f6368;
+  letter-spacing: 0.05em;
+}
