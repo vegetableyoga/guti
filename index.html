@@ -15,11 +15,13 @@
 </head>
 <body>
   <div id="app">
+    <!-- ブラウザ風 タブバー -->
+    <div class="tabs-bar-wrapper">
+      <div id="task-tabs" class="task-tabs-container"></div>
+      <button id="settings-btn" class="icon-btn header-gear">⚙️</button>
+    </div>
+
     <header class="main-header">
-      <div class="top-bar">
-        <button id="settings-btn" class="icon-btn">⚙️</button>
-      </div>
-      
       <h1 id="task-title">最低30分ヨガする</h1>
       
       <div class="header-dashboard">
@@ -56,29 +58,56 @@
     </footer>
   </div>
 
+  <!-- 設定モーダル -->
   <div id="settings-modal" class="modal hidden">
     <div class="modal-content">
-      <div class="setting-group">
-        <p class="setting-label">習慣にしたい日課を変更</p>
-        <div class="input-row">
-          <input type="text" id="task-input" placeholder="日課を入力してください">
-          <button id="save-task-btn">保存</button>
+      <div class="modal-scroll-area">
+        <!-- 新規タスク追加 -->
+        <div class="setting-group">
+          <p class="setting-label">＋ 新しいタスクを追加</p>
+          <div class="input-row">
+            <input type="text" id="new-task-input" placeholder="例: 読書を20分する">
+            <button id="add-task-btn" class="primary-btn">追加</button>
+          </div>
         </div>
-      </div>
-      <hr class="divider">
-      <div class="setting-group">
-        <p class="setting-label">OFF日の設定（毎週お休みにする曜日）</p>
-        <div id="off-days-container" class="off-days-grid"></div>
-      </div>
-      <hr class="divider">
-      <div class="setting-group">
-        <label class="setting-label toggle-label">
-          過去の日付の入力をロックする
-          <input type="checkbox" id="lock-past-checkbox">
-        </label>
-      </div>
-      <div class="setting-group" style="margin-top: 25px;">
-        <button id="reset-data-btn" class="danger-btn">記録をすべてリセット</button>
+
+        <hr class="divider">
+
+        <!-- 選択中タスクの名称変更 -->
+        <div class="setting-group">
+          <p class="setting-label">選択中タスクの名称変更</p>
+          <div class="input-row">
+            <input type="text" id="task-input" placeholder="タスク名を入力">
+            <button id="save-task-btn" class="primary-btn">保存</button>
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- 選択中タスクのOFF日設定 -->
+        <div class="setting-group">
+          <p class="setting-label">OFF日の設定（選択中タスクの毎週のお休み）</p>
+          <div id="off-days-container" class="off-days-grid"></div>
+        </div>
+
+        <!-- 選択中タスクの削除（複数ある場合のみ表示） -->
+        <div id="delete-task-container" class="setting-group" style="margin-top: 15px;">
+          <button id="delete-task-btn" class="sub-danger-btn">このタスクを削除</button>
+        </div>
+
+        <hr class="divider">
+
+        <!-- 共通設定 -->
+        <div class="setting-group">
+          <label class="setting-label toggle-label">
+            過去の日付の入力をロックする
+            <input type="checkbox" id="lock-past-checkbox">
+          </label>
+        </div>
+
+        <div class="setting-group" style="margin-top: 20px;">
+          <button id="reset-data-btn" class="danger-btn">すべてのタスクと記録を全リセット</button>
+        </div>
       </div>
       <button id="close-settings-btn" class="close-btn">閉じる</button>
     </div>
