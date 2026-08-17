@@ -1,6 +1,7 @@
 export interface TaskItem {
   id: string;
   title: string;
+  createdAt?: string; // 作成日（未入力日埋めの基準日）
   startDate: string | null;
   records: { [date: string]: 'O' | 'X' | 'OFF' };
   offDays: number[];
@@ -37,20 +38,25 @@ function formatDate(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
+function parseDateStr(str: string): Date {
+  const parts = str.split('-').map(Number);
+  return new Date(parts[0], parts[1] - 1, parts[2]);
+}
+
 function generateId(): string {
   return 'task_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
 }
 
-// 既存データと複数タスクデータのマイグレーション対応
 function loadData(): AppData {
+  const todayStr = formatDate(getJSTDate());
   const saved = localStorage.getItem('guti_data');
   if (saved) {
     const parsed = JSON.parse(saved);
-    // 旧バージョンの単一タスク形式の場合
     if (!parsed.tasks) {
       const initialTask: TaskItem = {
         id: 'default_task',
         title: parsed.taskTitle || '最低30分ヨガする',
+        createdAt: todayStr,
         startDate: parsed.startDate || null,
         records: parsed.records || {},
         offDays: parsed.offDays || []
@@ -61,13 +67,17 @@ function loadData(): AppData {
         lockPastDates: parsed.lockPastDates ?? true
       };
     }
+    // 既存タスクに createdAt がない場合のフォールバック
+    parsed.tasks.forEach((t: TaskItem) => {
+      if (!t.createdAt) t.createdAt = t.startDate || todayStr;
+    });
     return parsed;
   }
 
-  // 初期状態
   const defaultTask: TaskItem = {
     id: 'default_task',
     title: '最低30分ヨガする',
+    createdAt: todayStr,
     startDate: null,
     records: {},
     offDays: []
@@ -114,9 +124,11 @@ function updateTabsUI() {
     tab.appendChild(span);
 
     tab.addEventListener('click', () => {
-      if (data.activeTaskId !== task.id) {
-        data.activeTaskId = task.id;
-        saveData(data);
+      // 常に最新データをストレージから取得して更新
+      const latestData = loadData();
+      if (latestData.activeTaskId !== task.id) {
+        latestData.activeTaskId = task.id;
+        saveData(latestData);
         updateTabsUI();
         renderCalendar();
       }
@@ -144,9 +156,11 @@ function updateStatsAndPastDays(task: TaskItem, todayStr: string, jstToday: Date
     task.startDate = null;
   }
 
-  if (task.startDate) {
-    const start = new Date(task.startDate);
-    const today = new Date(jstToday.getFullYear(), jstToday.getMonth(), jstToday.getDate());
+  // 開始日、または作成日を起点として過去の未入力を X/OFF で埋める
+  const effectiveStartStr = task.startDate || task.createdAt;
+  if (effectiveStartStr) {
+    const start = parseDateStr(effectiveStartStr);
+    const today = parseDateStr(todayStr);
     for (let d = new Date(start); d < today; d.setDate(d.getDate() + 1)) {
       const dStr = formatDate(d);
       if (!task.records[dStr]) {
@@ -268,15 +282,18 @@ function renderCalendar() {
     if (canEdit) {
       cell.classList.add('clickable');
       cell.addEventListener('click', () => {
-        const current = activeTask.records[dateStr];
+        // クリック時も最新のストレージデータを読み込んで更新
+        const latestData = loadData();
+        const currentActiveTask = getActiveTask(latestData);
+        const current = currentActiveTask.records[dateStr];
         if (current === 'O') {
-          activeTask.records[dateStr] = 'X';
+          currentActiveTask.records[dateStr] = 'X';
         } else if (current === 'X') {
-          activeTask.records[dateStr] = 'OFF';
+          currentActiveTask.records[dateStr] = 'OFF';
         } else {
-          activeTask.records[dateStr] = 'O';
+          currentActiveTask.records[dateStr] = 'O';
         }
-        saveData(data);
+        saveData(latestData);
         renderCalendar();
       });
     }
@@ -331,7 +348,6 @@ function setupSettings() {
     if (lockCheckbox) lockCheckbox.checked = data.lockPastDates !== false;
     if (newTaskInput) newTaskInput.value = '';
 
-    // タスクが2つ以上ある場合のみ削除ボタンを表示
     if (deleteTaskContainer) {
       deleteTaskContainer.style.display = data.tasks.length > 1 ? 'block' : 'none';
     }
@@ -364,7 +380,6 @@ function setupSettings() {
     modal.classList.remove('hidden');
   });
 
-  // 新規タスク追加
   if (addTaskBtn && newTaskInput) {
     addTaskBtn.addEventListener('click', () => {
       const title = newTaskInput.value.trim();
@@ -374,6 +389,7 @@ function setupSettings() {
       const newTask: TaskItem = {
         id: generateId(),
         title,
+        createdAt: formatDate(getJSTDate()),
         startDate: null,
         records: {},
         offDays: []
@@ -392,7 +408,6 @@ function setupSettings() {
     });
   }
 
-  // 選択中タスクの名称変更
   if (saveTaskBtn && taskInput) {
     saveTaskBtn.addEventListener('click', () => {
       const data = loadData();
@@ -409,7 +424,6 @@ function setupSettings() {
     });
   }
 
-  // 選択中タスクの削除
   if (deleteTaskBtn) {
     deleteTaskBtn.addEventListener('click', () => {
       const data = loadData();
@@ -427,7 +441,6 @@ function setupSettings() {
     });
   }
 
-  // 過去日のロック設定
   if (lockCheckbox) {
     lockCheckbox.addEventListener('change', (e) => {
       const data = loadData();
@@ -437,7 +450,6 @@ function setupSettings() {
     });
   }
 
-  // 全リセット
   if (resetBtn) {
     resetBtn.addEventListener('click', () => {
       if (confirm('すべてのタスクと記録を完全リセットしますか？この操作は取り消せません。')) {
