@@ -6,10 +6,10 @@ export interface TaskItem {
   createdAt?: string;
   startDate: string | null;
   records: { [date: string]: 'O' | 'X' | 'OFF' };
-  offDays: number[]; // 曜日 (0-6)
-  offMode?: OffMode; // 'weekly' or 'cycle'
-  cycleWork?: number; // 1-10
-  cycleRest?: number; // 1-10
+  offDays: number[];
+  offMode?: OffMode;
+  cycleWork?: number;
+  cycleRest?: number;
 }
 
 export interface AppData {
@@ -159,10 +159,6 @@ function getMedalSVG(duration: number): string {
   return '';
 }
 
-/**
- * サイクルモードまたは曜日モードを考慮して
- * タスク開始日〜指定日までの各日付の自動OFF/記録状態をシミュレーション＆過去日補完
- */
 function updateStatsAndPastDays(task: TaskItem, todayStr: string, jstToday: Date): Map<string, boolean> {
   const isOffComputedMap = new Map<string, boolean>();
 
@@ -184,7 +180,6 @@ function updateStatsAndPastDays(task: TaskItem, todayStr: string, jstToday: Date
   const cycleWork = task.cycleWork || 3;
   const cycleRest = task.cycleRest || 1;
 
-  // カレンダー表示月末までの日付をシミュレーションして自動OFF判定マップを作成
   const endOfSimulation = new Date(currentViewYear, currentViewMonth + 1, 0);
   const simEnd = endOfSimulation > today ? endOfSimulation : today;
 
@@ -195,14 +190,12 @@ function updateStatsAndPastDays(task: TaskItem, todayStr: string, jstToday: Date
     const dStr = formatDate(d);
     const dayOfWeek = d.getDay();
     const isPast = d < today;
-    const isToday = dStr === todayStr;
 
     let isScheduledOff = false;
 
     if (offMode === 'weekly') {
       isScheduledOff = task.offDays.includes(dayOfWeek);
     } else {
-      // サイクルモード: 休み残りがあるか
       if (restDaysRemaining > 0) {
         isScheduledOff = true;
       }
@@ -210,23 +203,20 @@ function updateStatsAndPastDays(task: TaskItem, todayStr: string, jstToday: Date
 
     isOffComputedMap.set(dStr, isScheduledOff);
 
-    // 過去日の未入力を埋める
     if (isPast && !task.records[dStr]) {
       task.records[dStr] = isScheduledOff ? 'OFF' : 'X';
     }
 
-    // サイクル状態の更新
     const actualStatus = task.records[dStr];
     if (offMode === 'cycle') {
       if (actualStatus === 'O') {
         currentStreakInCycle++;
-        restDaysRemaining = 0; // 手動でOが入った場合は休み解除
+        restDaysRemaining = 0;
         if (currentStreakInCycle >= cycleWork) {
           restDaysRemaining = cycleRest;
           currentStreakInCycle = 0;
         }
       } else if (actualStatus === 'X') {
-        // 途切れた場合はカウントリセット＆休み解除
         currentStreakInCycle = 0;
         restDaysRemaining = 0;
       } else if (actualStatus === 'OFF' || (!actualStatus && isScheduledOff)) {
@@ -237,7 +227,6 @@ function updateStatsAndPastDays(task: TaskItem, todayStr: string, jstToday: Date
     }
   }
 
-  // ストリーク・継続日数計算
   let streak = 0;
   let duration = 0;
   let checkDate = new Date(jstToday.getFullYear(), jstToday.getMonth(), jstToday.getDate());
@@ -407,7 +396,6 @@ function setupSettings() {
   const lockCheckbox = document.getElementById('lock-past-checkbox') as HTMLInputElement;
   const resetBtn = document.getElementById('reset-data-btn');
 
-  // OFF設定関連
   const modeWeeklyBtn = document.getElementById('mode-weekly-btn');
   const modeCycleBtn = document.getElementById('mode-cycle-btn');
   const weeklySection = document.getElementById('weekly-off-section');
@@ -436,6 +424,20 @@ function setupSettings() {
     }
   }
 
+  function setOffModeUI(mode: OffMode) {
+    if (mode === 'weekly') {
+      modeWeeklyBtn?.classList.add('active');
+      modeCycleBtn?.classList.remove('active');
+      if (weeklySection) weeklySection.style.display = 'block';
+      if (cycleSection) cycleSection.style.display = 'none';
+    } else {
+      modeCycleBtn?.classList.add('active');
+      modeWeeklyBtn?.classList.remove('active');
+      if (weeklySection) weeklySection.style.display = 'none';
+      if (cycleSection) cycleSection.style.display = 'block';
+    }
+  }
+
   function refreshModalFields() {
     const data = loadData();
     const activeTask = getActiveTask(data);
@@ -448,29 +450,17 @@ function setupSettings() {
       deleteTaskContainer.style.display = data.tasks.length > 1 ? 'block' : 'none';
     }
 
-    // OFFモードタブ切り替え
     const mode = activeTask.offMode || 'weekly';
-    if (mode === 'weekly') {
-      modeWeeklyBtn?.classList.add('active');
-      modeCycleBtn?.classList.remove('active');
-      weeklySection?.classList.remove('hidden');
-      cycleSection?.classList.add('hidden');
-    } else {
-      modeCycleBtn?.classList.add('active');
-      modeWeeklyBtn?.classList.remove('active');
-      cycleSection?.classList.remove('hidden');
-      weeklySection?.classList.add('hidden');
-    }
+    setOffModeUI(mode);
 
-    // サイクルセレクト値
     if (cycleWorkSelect) cycleWorkSelect.value = String(activeTask.cycleWork || 3);
     if (cycleRestSelect) cycleRestSelect.value = String(activeTask.cycleRest || 1);
 
-    // 曜日ボタン
     if (container) {
       container.innerHTML = '';
       weekNames.forEach((name, index) => {
         const dayBtn = document.createElement('button');
+        dayBtn.type = 'button';
         dayBtn.className = 'off-day-btn';
         dayBtn.textContent = name;
         if (activeTask.offDays.includes(index)) dayBtn.classList.add('active');
@@ -492,28 +482,29 @@ function setupSettings() {
     }
   }
 
-  // モードタブのクリックイベント
-  if (modeWeeklyBtn && modeCycleBtn) {
+  // モードタブの切り替え
+  if (modeWeeklyBtn) {
     modeWeeklyBtn.addEventListener('click', () => {
       const data = loadData();
       const activeTask = getActiveTask(data);
       activeTask.offMode = 'weekly';
       saveData(data);
-      refreshModalFields();
+      setOffModeUI('weekly');
       renderCalendar();
     });
+  }
 
+  if (modeCycleBtn) {
     modeCycleBtn.addEventListener('click', () => {
       const data = loadData();
       const activeTask = getActiveTask(data);
       activeTask.offMode = 'cycle';
       saveData(data);
-      refreshModalFields();
+      setOffModeUI('cycle');
       renderCalendar();
     });
   }
 
-  // サイクル値変更イベント
   if (cycleWorkSelect) {
     cycleWorkSelect.addEventListener('change', () => {
       const data = loadData();
