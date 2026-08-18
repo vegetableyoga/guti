@@ -84,10 +84,30 @@
 
         <hr class="divider">
 
-        <!-- 選択中タスクのOFF日設定 -->
+        <!-- OFF日の設定（曜日 or サイクル） -->
         <div class="setting-group">
-          <p class="setting-label">OFF日の設定（選択中タスクの毎週のお休み）</p>
-          <div id="off-days-container" class="off-days-grid"></div>
+          <p class="setting-label">OFF日の設定</p>
+          
+          <div class="off-mode-selector">
+            <button id="mode-weekly-btn" class="mode-tab-btn active">曜日で指定</button>
+            <button id="mode-cycle-btn" class="mode-tab-btn">サイクルで指定</button>
+          </div>
+
+          <!-- 曜日指定エリア -->
+          <div id="weekly-off-section" class="off-section">
+            <div id="off-days-container" class="off-days-grid"></div>
+          </div>
+
+          <!-- サイクル指定エリア -->
+          <div id="cycle-off-section" class="off-section hidden">
+            <div class="cycle-picker-row">
+              <select id="cycle-work-select" class="cycle-select"></select>
+              <span class="cycle-label-text">日やったら</span>
+              <select id="cycle-rest-select" class="cycle-select"></select>
+              <span class="cycle-label-text">日やすみ</span>
+            </div>
+            <p class="cycle-help-text">※途中で途切れた場合はカウントが1日目にリセットされます</p>
+          </div>
         </div>
 
         <!-- 選択中タスクの削除（複数ある場合のみ表示） -->
