@@ -18,7 +18,7 @@
     <!-- ブラウザ風 タブバー -->
     <div class="tabs-bar-wrapper">
       <div id="task-tabs" class="task-tabs-container"></div>
-      <button id="settings-btn" class="icon-btn header-gear">⚙️</button>
+      <button type="button" id="settings-btn" class="icon-btn header-gear">⚙️</button>
     </div>
 
     <header class="main-header">
@@ -26,9 +26,9 @@
       
       <div class="header-dashboard">
         <div class="month-nav">
-          <button id="prev-month-btn" class="nav-btn">◀</button>
+          <button type="button" id="prev-month-btn" class="nav-btn">◀</button>
           <h2 id="current-month-display">2026年 5月</h2>
-          <button id="next-month-btn" class="nav-btn">▶</button>
+          <button type="button" id="next-month-btn" class="nav-btn">▶</button>
         </div>
         
         <div class="streak-wrap">
@@ -67,7 +67,7 @@
           <p class="setting-label">＋ 新しいタスクを追加</p>
           <div class="input-row">
             <input type="text" id="new-task-input" placeholder="例: 読書を20分する">
-            <button id="add-task-btn" class="primary-btn">追加</button>
+            <button type="button" id="add-task-btn" class="primary-btn">追加</button>
           </div>
         </div>
 
@@ -78,7 +78,7 @@
           <p class="setting-label">選択中タスクの名称変更</p>
           <div class="input-row">
             <input type="text" id="task-input" placeholder="タスク名を入力">
-            <button id="save-task-btn" class="primary-btn">保存</button>
+            <button type="button" id="save-task-btn" class="primary-btn">保存</button>
           </div>
         </div>
 
@@ -89,8 +89,8 @@
           <p class="setting-label">OFF日の設定</p>
           
           <div class="off-mode-selector">
-            <button id="mode-weekly-btn" class="mode-tab-btn active">曜日で指定</button>
-            <button id="mode-cycle-btn" class="mode-tab-btn">サイクルで指定</button>
+            <button type="button" id="mode-weekly-btn" class="mode-tab-btn active">曜日で指定</button>
+            <button type="button" id="mode-cycle-btn" class="mode-tab-btn">サイクルで指定</button>
           </div>
 
           <!-- 曜日指定エリア -->
@@ -99,7 +99,7 @@
           </div>
 
           <!-- サイクル指定エリア -->
-          <div id="cycle-off-section" class="off-section hidden">
+          <div id="cycle-off-section" class="off-section" style="display: none;">
             <div class="cycle-picker-row">
               <select id="cycle-work-select" class="cycle-select"></select>
               <span class="cycle-label-text">日やったら</span>
@@ -110,9 +110,9 @@
           </div>
         </div>
 
-        <!-- 選択中タスクの削除（複数ある場合のみ表示） -->
+        <!-- 選択中タスクの削除 -->
         <div id="delete-task-container" class="setting-group" style="margin-top: 15px;">
-          <button id="delete-task-btn" class="sub-danger-btn">このタスクを削除</button>
+          <button type="button" id="delete-task-btn" class="sub-danger-btn">このタスクを削除</button>
         </div>
 
         <hr class="divider">
@@ -126,10 +126,10 @@
         </div>
 
         <div class="setting-group" style="margin-top: 20px;">
-          <button id="reset-data-btn" class="danger-btn">すべてのタスクと記録を全リセット</button>
+          <button type="button" id="reset-data-btn" class="danger-btn">すべてのタスクと記録を全リセット</button>
         </div>
       </div>
-      <button id="close-settings-btn" class="close-btn">閉じる</button>
+      <button type="button" id="close-settings-btn" class="close-btn">閉じる</button>
     </div>
   </div>
 
