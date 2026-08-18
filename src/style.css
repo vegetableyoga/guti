@@ -119,7 +119,7 @@ body { background-color: var(--bg-color); color: var(--text-color); font-family:
 /* モーダル */
 .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
 .modal.hidden { display: none; }
-.modal-content { background: var(--bg-color); border: 1px solid var(--border-color); padding: 20px; border-radius: 12px; width: 90%; max-width: 360px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+.modal-content { background: var(--bg-color); border: 1px solid var(--border-color); padding: 20px; border-radius: 12px; width: 90%; max-width: 360px; max-height: 88vh; display: flex; flex-direction: column; box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
 .modal-scroll-area { overflow-y: auto; flex-grow: 1; padding-right: 4px; margin-bottom: 10px; }
 .setting-group { text-align: left; margin-bottom: 12px; }
 .setting-label { font-size: 0.85rem; font-weight: 700; color: #5f6368; margin-bottom: 8px; }
@@ -133,9 +133,73 @@ body { background-color: var(--bg-color); color: var(--text-color); font-family:
 .danger-btn { background: #ef4444; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: 700; cursor: pointer; width: 100%; font-size: 0.9rem; }
 
 .divider { border: none; border-top: 1px solid var(--border-color); margin: 15px 0; }
+
+/* OFFモード切り替えタブ */
+.off-mode-selector {
+  display: flex;
+  background-color: var(--gray-color);
+  border-radius: 6px;
+  padding: 3px;
+  margin-bottom: 10px;
+  gap: 4px;
+}
+.mode-tab-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 6px 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #64748b;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.mode-tab-btn.active {
+  background-color: #ffffff;
+  color: #1e293b;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.off-section.hidden { display: none; }
+
 .off-days-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
 .off-day-btn { background: var(--gray-color); color: #555; border: 1px solid var(--border-color); padding: 8px 0; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 700; }
 .off-day-btn.active { background: var(--accent-color); color: var(--active-color); border-color: var(--active-color); }
+
+/* サイクル指定セレクトUI */
+.cycle-picker-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 0 5px;
+}
+.cycle-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: var(--gray-color);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #1e293b;
+  text-align: center;
+  cursor: pointer;
+}
+.cycle-label-text {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #5f6368;
+}
+.cycle-help-text {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  text-align: center;
+  margin-top: 6px;
+}
+
 .close-btn { background: var(--gray-color); color: var(--text-color); border: 1px solid var(--border-color); padding: 10px 0; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 0.95rem; width: 100%; }
 
 .toggle-label { display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 0.85rem; color: var(--text-color); margin-bottom: 0; }
