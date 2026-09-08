@@ -203,23 +203,33 @@ function updateStatsAndPastDays(task: TaskItem, todayStr: string, jstToday: Date
 
     isOffComputedMap.set(dStr, isScheduledOff);
 
+    // 過去日の未入力を埋める
     if (isPast && !task.records[dStr]) {
       task.records[dStr] = isScheduledOff ? 'OFF' : 'X';
     }
 
+    // サイクル状態の更新
     const actualStatus = task.records[dStr];
     if (offMode === 'cycle') {
       if (actualStatus === 'O') {
         currentStreakInCycle++;
-        restDaysRemaining = 0;
+        restDaysRemaining = 0; // 手動で○がついたら休み消化は解除
         if (currentStreakInCycle >= cycleWork) {
           restDaysRemaining = cycleRest;
           currentStreakInCycle = 0;
         }
       } else if (actualStatus === 'X') {
+        // ×で途切れた場合はサイクルリセット
         currentStreakInCycle = 0;
         restDaysRemaining = 0;
-      } else if (actualStatus === 'OFF' || (!actualStatus && isScheduledOff)) {
+      } else if (actualStatus === 'OFF') {
+        // 【修正点】手動・不規則なOFFが入った場合、これまでの連続カウントを0にリセットする
+        currentStreakInCycle = 0;
+        if (restDaysRemaining > 0) {
+          restDaysRemaining--;
+        }
+      } else if (!actualStatus && isScheduledOff) {
+        // 自動スケジュールされたOFF日の場合
         if (restDaysRemaining > 0) {
           restDaysRemaining--;
         }
@@ -227,6 +237,7 @@ function updateStatsAndPastDays(task: TaskItem, todayStr: string, jstToday: Date
     }
   }
 
+  // ストリーク・継続日数計算
   let streak = 0;
   let duration = 0;
   let checkDate = new Date(jstToday.getFullYear(), jstToday.getMonth(), jstToday.getDate());
@@ -407,7 +418,6 @@ function setupSettings() {
   if (!btn || !modal || !closeBtn) return;
   const weekNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  // 1〜10の選択肢を生成
   if (cycleWorkSelect && cycleRestSelect) {
     cycleWorkSelect.innerHTML = '';
     cycleRestSelect.innerHTML = '';
@@ -482,7 +492,6 @@ function setupSettings() {
     }
   }
 
-  // モードタブの切り替え
   if (modeWeeklyBtn) {
     modeWeeklyBtn.addEventListener('click', () => {
       const data = loadData();
