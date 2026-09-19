@@ -213,23 +213,24 @@ function updateStatsAndPastDays(task: TaskItem, todayStr: string, jstToday: Date
     if (offMode === 'cycle') {
       if (actualStatus === 'O') {
         currentStreakInCycle++;
-        restDaysRemaining = 0; // 手動で○がついたら休み消化は解除
+        // 規定日数以上連続している限り、常に「直後をOFF」としてスライド維持する
         if (currentStreakInCycle >= cycleWork) {
           restDaysRemaining = cycleRest;
-          currentStreakInCycle = 0;
+        } else {
+          restDaysRemaining = 0;
         }
       } else if (actualStatus === 'X') {
-        // ×で途切れた場合はサイクルリセット
         currentStreakInCycle = 0;
         restDaysRemaining = 0;
       } else if (actualStatus === 'OFF') {
-        // 【修正点】手動・不規則なOFFが入った場合、これまでの連続カウントを0にリセットする
+        // OFFを挟んだ時点で連続カウントをリセット
         currentStreakInCycle = 0;
         if (restDaysRemaining > 0) {
           restDaysRemaining--;
         }
       } else if (!actualStatus && isScheduledOff) {
-        // 自動スケジュールされたOFF日の場合
+        // 自動スケジュールされたOFF日に入った場合
+        currentStreakInCycle = 0;
         if (restDaysRemaining > 0) {
           restDaysRemaining--;
         }
